@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 const InfiniteScroll = () => {
   const initialItems = ["1", "2", "3", "4", "5"];
   const [isLoading, setIsLoading] = useState(false);
-
   const [items, setItems] = useState(initialItems);
 
   const generateMoreData = () => {
@@ -21,46 +20,37 @@ const InfiniteScroll = () => {
     }, 1000);
   };
 
-  const observerRef = useRef(null);
+  const myRef = useRef(null);
   useEffect(() => {
-    // Create an intersection observer instance
+    const currentRef = myRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0]; // Get the first (and only) entry
-        if (entry.isIntersecting && !isLoading) {
-          generateMoreData(); // If it's in view, and we're not already loading data, load more
+        const myEntry = entries[0];
+        if (myEntry.isIntersecting && !isLoading) {
+          generateMoreData();
+          // Custom sentinel bg.
         }
       },
       { threshold: 1.0 }
     );
-
-    // Start observing the sentinel element
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
-
-    // Cleanup the observer when the component unmounts
-    return () => {
-      if (observerRef.current) {
-        observer.unobserve(observerRef.current);
-      }
-    };
-  }, [isLoading]); // Runs again if `isLoading` changes
+    if (currentRef) observer.observe(currentRef);
+    return () => currentRef && observer.unobserve(currentRef);
+  }, [isLoading]);
 
   return (
     <div>
       <ul>
         {items.map((item, index) => (
-          <li key={index} className="p-10 m-10 border border-black">
+          <li
+            key={index}
+            className="px-10 py-6 m-8 border border-black rounded-2xl"
+          >
             {item}
           </li>
         ))}
       </ul>
-      {isLoading && <p>Generating data . ...</p>}
-      <div
-        ref={observerRef}
-        className="h-5 bg-black border border-purple-700"
-      ></div>
+      {isLoading && <p>Generating data ...</p>}
+      <div ref={myRef} className="h-5"></div>
     </div>
   );
 };
